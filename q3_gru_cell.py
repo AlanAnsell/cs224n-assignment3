@@ -63,9 +63,31 @@ class GRUCell(tf.nn.rnn_cell.RNNCell):
 
         # It's always a good idea to scope variables in functions lest they
         # be defined elsewhere!
+        new_state = None
         with tf.variable_scope(scope):
             ### YOUR CODE HERE (~20-30 lines)
-            pass
+            Wz = tf.get_variable('W_z', shape=(self.input_size, self._state_size), dtype=tf.float32,
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            Wr = tf.get_variable('W_r', shape=(self.input_size, self._state_size), dtype=tf.float32,
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            Wo = tf.get_variable('W_o', shape=(self.input_size, self._state_size), dtype=tf.float32,
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            Uz = tf.get_variable('U_z', shape=(self._state_size, self._state_size), dtype=tf.float32,
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            Ur = tf.get_variable('U_r', shape=(self._state_size, self._state_size), dtype=tf.float32,
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            Uo = tf.get_variable('U_o', shape=(self._state_size, self._state_size), dtype=tf.float32,
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            bz = tf.get_variable('b_z', shape=(self._state_size,), dtype=tf.float32,
+                                 initializer=tf.zeros_initializer())
+            br = tf.get_variable('b_r', shape=(self._state_size,), dtype=tf.float32,
+                                 initializer=tf.zeros_initializer())
+            bo = tf.get_variable('b_o', shape=(self._state_size,), dtype=tf.float32,
+                                 initializer=tf.zeros_initializer())
+            z = tf.sigmoid(tf.matmul(inputs, Wz) + tf.matmul(state, Uz) + bz)
+            r = tf.sigmoid(tf.matmul(inputs, Wr) + tf.matmul(state, Ur) + br)
+            o = tf.tanh(tf.matmul(inputs, Wo) + r * tf.matmul(state, Uo) + bo)
+            new_state = z * state + (1.0 - z) * o
             ### END YOUR CODE ###
         # For a GRU, the output and state are the same (N.B. this isn't true
         # for an LSTM, though we aren't using one of those in our

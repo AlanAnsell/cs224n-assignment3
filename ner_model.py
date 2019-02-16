@@ -110,7 +110,11 @@ class NERModel(Model):
                         # [features, labels]. This makes expanding tuples into arguments (* operator) handy
 
             ### YOUR CODE HERE (2-3 lines)
-
+            losses = []
+            for i, batch in enumerate(minibatches(
+                    train_examples, self.config.batch_size, shuffle=False)):
+                losses.append(('Loss', self.train_on_batch(sess, *batch)))
+                prog.update(i + 1, losses)
             ### END YOUR CODE
 
             logger.info("Evaluating on development data")

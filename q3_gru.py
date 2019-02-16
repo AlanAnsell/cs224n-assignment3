@@ -86,10 +86,12 @@ class SequencePredictor(Model):
             raise ValueError("Unsupported cell type.")
 
         x = self.inputs_placeholder
+        outputs, state = tf.nn.dynamic_rnn(cell, x,
+                                           initial_state=tf.zeros(shape=(tf.shape(self.inputs_placeholder)[0], 1)))
         ### YOUR CODE HERE (~2-3 lines)
         ### END YOUR CODE
 
-        return preds #state # preds
+        return tf.sigmoid(state)
 
     def add_loss_op(self, preds):
         """Adds ops to compute the loss function.
@@ -111,7 +113,7 @@ class SequencePredictor(Model):
 
         ### END YOUR CODE
 
-        return loss
+        return tf.reduce_mean(tf.square(y - preds))
 
     def add_training_op(self, loss):
         """Sets up the training Ops.
@@ -140,6 +142,17 @@ class SequencePredictor(Model):
         """
 
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.config.lr)
+
+        grads_and_vars = optimizer.compute_gradients(loss)
+
+        if self.config.clip_gradients:
+            clipped_gradients, _ = tf.clip_by_global_norm([g for g, v in grads_and_vars], self.config.max_grad_norm)
+            grads_and_vars = [(cg, v) for cg, (g, v) in zip(clipped_gradients, grads_and_vars)]
+            
+        self.grad_norm = tf.global_norm([g for g, v in grads_and_vars])
+        
+        train_op = optimizer.apply_gradients(grads_and_vars)
+        #train_op = optimizer.minimize(loss)
 
         ### YOUR CODE HERE (~6-10 lines)
 
